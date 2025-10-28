@@ -1,107 +1,184 @@
-<?php
-	require 'conexion.php';
-	
-	$where = "";
-	
-	if(!empty($_POST))
-	{
-		$valor = $_POST['campo'];
-		if(!empty($valor)){
-			$where = "WHERE Categoria LIKE '%$valor%'";
-			$where = "WHERE nombre LIKE '%$valor%'";
-		}
-	}
-	$sql = "SELECT * FROM productos $where";
-	$resultado = $mysqli->query($sql);
-	
-?>
+<!DOCTYPE html>
 <html lang="es">
-	<head>
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link href="css/bootstrap.min.css" rel="stylesheet">
-		<link href="css/bootstrap-theme.css" rel="stylesheet">
-		<script src="js/jquery-3.1.1.min.js"></script>
-		<script src="js/bootstrap.min.js"></script>	
-	</head>
-	
-	<body>
-		
-		<div class="container">
-			<div class="row">
-				<h2 style="text-align:center">TIENDA YOLI</h2>
-			</div>
-			
-			<div class="row">
-				<a href="nuevo.php" class="btn btn-primary">Nuevo Registro</a>
-				<br>
-				<br>
-				
-				<form action="<?php $_SERVER['PHP_SELF']; ?>" method="POST">
-					<b>Nombre: </b><input type="text" id="campo" name="campo" />
-					<input type="submit" id="enviar" name="enviar" value="Buscar" class="btn btn-info" />
-				</form>
-			</div>
-			
-			<br>
-			
-			<div class="row table-responsive">
-				<table class="table table-striped">
-					<thead>
-						<tr>
-							<th>ID</th>
-							<th>Categoria</th>
-							<th>Nombre</th>
-							<th>Precio</th>
-							<th></th>
-							<th></th>
-						</tr>
-					</thead>
-					
-					<tbody>
-						<?php while($row = $resultado->fetch_array(MYSQLI_ASSOC)) { ?>
-							<tr>
-								<td><?php echo $row['id']; ?></td>
-								<td><?php echo $row['Categoria']; ?></td>
-								<td><?php echo $row['nombre']; ?></td>
-								<td><?php echo $row['precio']; ?></td>
-								<td><a href="modificar.php?id=<?php echo $row['id']; ?>"><span class="glyphicon glyphicon-pencil"></span></a></td>
-								<td><a href="#" data-href="eliminar.php?id=<?php echo $row['id']; ?>" data-toggle="modal" data-target="#confirm-delete"><span class="glyphicon glyphicon-trash"></span></a></td>
-							</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-		</div>
-		
-		<!-- Modal -->
-		<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-						<h4 class="modal-title" id="myModalLabel">Eliminar Registro</h4>
-					</div>
-					
-					<div class="modal-body">
-						¿Desea eliminar este registro?
-					</div>
-					
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-						<a class="btn btn-danger btn-ok">Delete</a>
-					</div>
-				</div>
-			</div>
-		</div>
-		
-		<script>
-			$('#confirm-delete').on('show.bs.modal', function(e) {
-				$(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
-				
-				$('.debug-url').html('Delete URL: <strong>' + $(this).find('.btn-ok').attr('href') + '</strong>');
-			});
-		</script>	
-		
-	</body>
-</html>	
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Audio</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        
+        .audio-player {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            max-width: 400px;
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .audio-player:hover {
+            transform: translateY(-5px);
+        }
+        
+        .album-art {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .album-art::before {
+            content: "";
+            width: 120px;
+            height: 120px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+        
+        .album-art::after {
+            content: "";
+            width: 40px;
+            height: 40px;
+            background-color: #6a11cb;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 1;
+        }
+        
+        .player-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .station-info {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .audio-controls {
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .custom-audio {
+            width: 100%;
+            height: 40px;
+            outline: none;
+        }
+        
+        .custom-audio::-webkit-media-controls-panel {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .custom-audio::-webkit-media-controls-play-button {
+            background-color: #6a11cb;
+            border-radius: 50%;
+        }
+        
+        .custom-audio::-webkit-media-controls-volume-slider {
+            background-color: #6a11cb;
+            border-radius: 10px;
+        }
+        
+        .custom-audio::-webkit-media-controls-current-time-display,
+        .custom-audio::-webkit-media-controls-time-remaining-display {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .info-box {
+            background-color: rgba(106, 17, 203, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-title {
+            color: #6a11cb;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .info-text {
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        
+        .feature-list {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+        
+        .feature-list li {
+            padding: 5px 0;
+            color: #555;
+        }
+        
+        .feature-list li i {
+            color: #6a11cb;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="audio-player p-4">
+                    <!-- Álbum art -->
+                    <div class="album-art mb-4"></div>
+                    
+                    <!-- Información de la estación -->
+                    <div class="text-center mb-4">
+                        <h3 class="player-title">Radio en Vivo</h3>
+                        <p class="station-info">Disfruta de nuestra programación en vivo las 24 horas</p>
+                    </div>
+                    
+                    <!-- Reproductor de audio nativo -->
+                    <div class="audio-controls">
+                        <audio class="custom-audio" controls>
+                            <source src="https://uk17freenew.listen2myradio.com/live.mp3?typeportmount=ice_8355_stream_218867363" type="audio/mpeg">
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
+                    </div>
+                    
+                    <!-- Información adicional -->
+                    <div class="info-box">
+                        <h5 class="info-title">Características del reproductor</h5>
+                        <p class="info-text">Este reproductor utiliza el elemento de audio nativo de HTML5 con estilos personalizados.</p>
+                        
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> Compatible con todos los navegadores modernos</li>
+                            <li><i class="fas fa-check-circle"></i> Diseño completamente responsivo</li>
+                            <li><i class="fas fa-check-circle"></i> Controles nativos del navegador</li>
+                            <li><i class="fas fa-check-circle"></i> Funciona perfectamente en GitHub Pages</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
